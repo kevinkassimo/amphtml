@@ -175,6 +175,16 @@ export class Services {
 
   /**
    * @param {!Node|!./service/ampdoc-impl.AmpDoc} nodeOrDoc
+   * @return {!Promise<?../extensions/amp-toggle-class/0.1/toggle-impl.Toggle>}
+   */
+  static toggleClassForDocOrNull(nodeOrDoc) {
+    return /** @type {!Promise<?../extensions/amp-toggle-class/0.1/toggle-impl.Toggle>} */ (
+      getElementServiceIfAvailableForDocInEmbedScope(
+          nodeOrDoc, 'toggle-class', 'amp-toggle-class'));
+  }
+
+  /**
+   * @param {!Node|!./service/ampdoc-impl.AmpDoc} nodeOrDoc
    * @return {!Promise<!./service/cid-impl.Cid>}
    */
   static cidForDoc(nodeOrDoc) {

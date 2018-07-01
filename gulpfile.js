@@ -162,6 +162,7 @@ declareExtension('amp-story', ['0.1', '1.0'], {
 });
 declareExtension('amp-story-auto-ads', '0.1', {hasCss: true});
 declareExtension('amp-selector', '0.1', {hasCss: true});
+declareExtension('amp-toggle-class', '0.1');
 declareExtension('amp-web-push', '0.1', {hasCss: true});
 declareExtension('amp-wistia-player', '0.1');
 declareExtension('amp-position-observer', '0.1');

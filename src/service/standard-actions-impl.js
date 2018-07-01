@@ -110,6 +110,12 @@ export class StandardActions {
           return bind.invoke(invocation);
         });
 
+      case 'toggleClass':
+        return Services.toggleClassForDocOrNull(node).then(toggle => {
+          user().assert(toggle, 'AMP-TOGGLE-CLASS is not installed.');
+          return toggle.invoke(invocation);
+        });
+
       case 'navigateTo':
         // Some components have additional constraints on allowing navigation.
         let permission = Promise.resolve();
