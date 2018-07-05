@@ -625,8 +625,32 @@ export class ActionService {
     let actionMap = node[ACTION_MAP_];
     if (actionMap === undefined) {
       actionMap = null;
-      if (node.hasAttribute('on')) {
-        actionMap = parseActionMap(node.getAttribute('on'), node);
+      const attrs = node.attributes;
+      let hasOnAttribute = false;
+      let onStr = null;
+
+      for (let i = 0, numberOfAttrs = attrs.length; i < numberOfAttrs; i++) {
+        const {name: attrName, value: attrValue} = attrs[i];
+        if (attrName == 'on') {
+          hasOnAttribute = true;
+          onStr = attrValue;
+        } else if (attrName.length > 2 // must be non-empty
+            && attrName[0] === '(' && attrName[attrName.length - 1] === ')') {
+          const actionName = attrName.substr(1, attrName.length - 2);
+          if (!actionMap) {
+            actionMap = map();
+          }
+          actionMap[actionName] = parseAngularActions(
+              actionName,
+              attrValue,
+              node
+          );
+        }
+      }
+
+      // 'on' can overwrite (event) notation
+      if (hasOnAttribute) {
+        actionMap = parseActionMap(onStr, node, actionMap);
       }
       node[ACTION_MAP_] = actionMap;
     }
@@ -753,18 +777,85 @@ function notImplemented() {
   dev().assert(null, 'Deferred events cannot access native event functions.');
 }
 
+/**
+ * Parse angular styled action map
+ * @param {string} event
+ * @param {string} s
+ * @param {!Element} context
+ * @return {!Array<ActionEventDef>}
+ */
+function parseAngularActions(event, s, context) {
+  const assertAction = assertActionForParser.bind(null, s, context);
+  const assertToken = assertTokenForParser.bind(null, s, context);
+
+  const toks = new ParserTokenizer(s);
+  const tok = toks.next();
+  let peek;
+
+  const actions = [];
+
+  if (tok.type == TokenType.EOF ||
+          tok.type == TokenType.SEPARATOR && tok.value == ';') {
+    // Expected, ignore.
+  } else if (tok.type == TokenType.LITERAL || tok.type == TokenType.ID) {
+    // TODO(kqian): reuse code with parseActionMap
+
+    // Handlers for event
+    do {
+      const target = assertToken(
+          tok, [TokenType.LITERAL, TokenType.ID]).value;
+
+      // Method: ".method". Method is optional.
+      let method = DEFAULT_METHOD_;
+      let args = null;
+
+      peek = toks.peek();
+      if (peek.type == TokenType.SEPARATOR && peek.value == '.') {
+        toks.next(); // Skip '.'
+        method = assertToken(
+            toks.next(), [TokenType.LITERAL, TokenType.ID]).value || method;
+
+        // Optionally, there may be arguments: "(key = value, key = value)".
+        peek = toks.peek();
+        if (peek.type == TokenType.SEPARATOR && peek.value == '(') {
+          toks.next(); // Skip '('
+          args = tokenizeMethodArguments(toks, assertToken, assertAction);
+        }
+      }
+
+      actions.push({
+        event,
+        target,
+        method,
+        args: (args && getMode().test && Object.freeze) ?
+          Object.freeze(args) : args,
+        str: s,
+      });
+
+      peek = toks.peek();
+
+    } while (peek.type == TokenType.SEPARATOR && peek.value == ','
+        && toks.next()); // skip "," when found
+  } else {
+    // Unexpected token.
+    assertAction(false, `; unexpected token [${tok.value || ''}]`);
+  }
+
+  return actions;
+}
 
 /**
  * @param {string} s
  * @param {!Element} context
+ * @param {?Object<string, !Array<!ActionInfoDef>>} protoActionMap
  * @return {?Object<string, !Array<!ActionInfoDef>>}
  * @private Visible for testing only.
  */
-export function parseActionMap(s, context) {
+export function parseActionMap(s, context, protoActionMap) {
   const assertAction = assertActionForParser.bind(null, s, context);
   const assertToken = assertTokenForParser.bind(null, s, context);
 
-  let actionMap = null;
+  let actionMap = protoActionMap || null;
 
   const toks = new ParserTokenizer(s);
   let tok;
