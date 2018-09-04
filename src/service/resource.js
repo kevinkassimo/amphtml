@@ -949,11 +949,28 @@ export class Resource {
   }
 
   /**
+   * Whether the resource is exactly visible in the viewport.
+   * @return {boolean}
+   */
+  isInImmediateViewport() {
+    return this.element.isInImmediateViewport();
+  }
+
+  /**
    * Updates the inViewport state of the element.
    * @param {boolean} inViewport
    */
   setInViewport(inViewport) {
     this.element.viewportCallback(inViewport);
+  }
+
+  /**
+   * Updates the inImmediateViewport state of the element.
+   * (exactly when the top/bottom of element enters/leaves the viewport)
+   * @param {boolean} inImmediateViewport
+   */
+  setInImmediateViewport(inImmediateViewport) {
+    this.element.immediateViewportCallback(inImmediateViewport);
   }
 
   /**

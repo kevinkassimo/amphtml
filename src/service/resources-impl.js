@@ -1594,6 +1594,11 @@ export class Resources {
       const shouldBeInViewport = (this.visible_ && r.isDisplayed() &&
           r.overlaps(visibleRect));
       r.setInViewport(shouldBeInViewport);
+
+      // This corresponds to when the element is immediately outside of viewport
+      const shouldBeInImmediateViewport = (this.visible_ && r.isDisplayed() &&
+          r.overlaps(viewportRect)); // notice we use `viewportRect` here
+      r.setInImmediateViewport(shouldBeInImmediateViewport);
     }
 
     // Phase 4: Schedule elements for layout within a reasonable distance from

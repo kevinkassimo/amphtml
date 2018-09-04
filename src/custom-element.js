@@ -210,6 +210,9 @@ function createBaseCustomElementClass(win) {
       this.isInViewport_ = false;
 
       /** @private {boolean} */
+      this.isInImmediateViewport_ = false;
+
+      /** @private {boolean} */
       this.paused_ = false;
 
       /** @private {string|null|undefined} */
@@ -1105,6 +1108,17 @@ function createBaseCustomElementClass(win) {
     }
 
     /**
+     * Whether the resource is exactly visible in the viewport.
+     * See difference from `isInViewport` in definition of
+     * `immediateViewportCallback`
+     * @return {boolean}
+     * @final @package @this {!Element}
+     */
+    isInImmediateViewport() {
+      return this.isInImmediateViewport_;
+    }
+
+    /**
      * Instructs the resource that it entered or exited the visible viewport.
      *
      * Can only be called on a upgraded and built element.
@@ -1149,6 +1163,35 @@ function createBaseCustomElementClass(win) {
     }
 
     /**
+     * Instructs the resource that it entered or exited the exact viewport.
+     *
+     * This differs from `viewportCallback` by that it does not consider the 25%
+     * viewport expansion. Also, it does not affect any loading toggle.
+     *
+     * It is merely an indication that the element just leaves the viewport.
+     * NO other side effects for now.
+     *
+     * @param {boolean} inImmediateViewport Whether the element has entered or exited
+     *   the exact viewport (no 25% expansion, compared to viewportCallback).
+     */
+    immediateViewportCallback(inImmediateViewport) {
+      assertNotTemplate(this);
+      if (inImmediateViewport == this.isInImmediateViewport_) {
+        return;
+      }
+      // TODO(dvoytenko, #9177): investigate/cleanup viewport signals for
+      // elements in dead iframes.
+      if (!this.ownerDocument ||
+          !this.ownerDocument.defaultView) {
+        return;
+      }
+      this.isInImmediateViewport_ = inImmediateViewport;
+      if (this.isBuilt()) {
+        this.updateInImmediateViewport_(inImmediateViewport);
+      }
+    }
+
+    /**
      * @param {boolean} inViewport
      * @private @this {!Element}
      */
@@ -1158,6 +1201,15 @@ function createBaseCustomElementClass(win) {
       if (inViewport && this.perfOn_) {
         this.getLayoutDelayMeter_().enterViewport();
       }
+    }
+
+    /**
+     * @param {boolean} inImmediateViewport
+     * @private @this {!Element}
+     */
+    updateInImmediateViewport_(inImmediateViewport) {
+      this.implementation_.inImmediateViewport_ = inImmediateViewport;
+      this.implementation_.immediateViewportCallback(inImmediateViewport);
     }
 
     /**

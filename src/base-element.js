@@ -103,6 +103,10 @@ import {preconnectForElement} from './preconnect';
  * when the user swipes away from the document, or another tab is focused.
  * In these situations, expensive memory and CPU resources should be freed.
  *
+ * The immediateViewportCallback is called when the element just left the
+ * viewport (top/bottom of element outside of viewport). It does not cause
+ * any other side effect (in comparison to viewportCallback)
+ *
  * Additionally whenever the dimensions of an element might have changed
  * AMP remeasures its dimensions and calls `onLayoutMeasure` on the
  * element instance. This can be used to do additional style calculations
@@ -142,6 +146,9 @@ export class BaseElement {
 
     /** @package {boolean} */
     this.inViewport_ = false;
+
+    /** @package {boolean} */
+    this.inImmediateViewport_ = false;
 
     /** @public @const {!Window} */
     this.win = toWin(element.ownerDocument.defaultView);
@@ -310,6 +317,13 @@ export class BaseElement {
    */
   isInViewport() {
     return this.inViewport_;
+  }
+
+  /**
+   * @return {boolean}
+   */
+  isInImmediateViewport() {
+    return this.inImmediateViewport_;
   }
 
   /**
@@ -489,6 +503,14 @@ export class BaseElement {
    * @param {boolean} unusedInViewport
    */
   viewportCallback(unusedInViewport) {
+  }
+
+  /**
+   * Instructs the resource that it has either entered or exited the visible
+   * viewport. Intended to be implemented by actual components.
+   * @param {boolean} unusedInViewport
+   */
+  immediateViewportCallback(unusedInViewport) {
   }
 
   /**
